@@ -59,11 +59,10 @@
 			Vue.component('gallery', {
 				template: 
 				`<div>
-						<gallery-item v-for="(item, i) in images" ref=item :index="i" :image="images[i]"></gallery-item>
-						<gallery-viewport v-for="(item, i) in images" ref=view :index="i" :image="images[i]"></gallery-viewport>
+						<gallery-item v-for="(item, i) in images" ref=item :index="i" :imageSrc="images[i].data.attrs.src"></gallery-item>
+						<gallery-viewport v-for="(item, i) in images" ref=view :index="i" :imageSrc="images[i].data.attrs.src"></gallery-viewport>
 				</div>
 				`,
-				props: ["images"],
 				methods:{
 					next: function(){
 						this.chose(this.current+1)
@@ -90,11 +89,12 @@
 					}
 				},
 				data: ()=>({ 
+					images: [],
 					current: 0,
 					viewStates: ["hiddenLeft","left","expand","right","hiddenRight"]
 				}),
 				created: function(w){
-
+					this.images=this.$slots.default.filter( e=> e.tag=="img" )
 				},
 				beforeMount: function(w){
 					
@@ -104,9 +104,9 @@
 
 			Vue.component('gallery-item', {
 				template:
-				`<div :style="styleItem" @click="click">{{image.name}}</div>`,
+				`<div :style="styleItem" @click="click"></div>`,
 
-  				props: ['index','image'],
+  				props: ['index','imageSrc'],
 
 				methods:{
 					click:function(e){
@@ -140,13 +140,13 @@
 						styleItem:{
 							width: "18%",
 							height: "300px",
-							border: "1px solid #000",
+							//border: "1px solid #000",
 							float: "left",
 							margin: "1%",
 							boxSizing: "border-box",
 							transform: "",
 							cursor: "pointer",
-							background:"#000 url('"+this.image.src+"')",
+							background:"#000 url('"+this.imageSrc+"')",
 							backgroundSize: "cover"
 						},
 						statesItem:{
@@ -178,21 +178,22 @@
 						<div :style="styleOverlay" @click=" state=='left' ? prev() : next() "></div>
 						<div 
 						style="
-							background:rgba(255,255,255,0.7);
-							position:absolute;
-							right:0;
-							top:0;
-							padding:15px 20px;
-							cursor:pointer;
-							font:800 40px/1 sans-serif;
-							text-shadow:0 0 2px white"
+							background: rgba(255,255,255,1);
+							opacity: 0.4;
+							position: absolute;
+							right: 0;
+							top: 0;
+							padding: 15px 20px;
+							cursor: pointer;
+							font: 800 40px/1 sans-serif;
+							text-shadow: 0 0 2px white"
 						@click="close">
 							X
 						</div>
 					</div>
 				</div>`,
 
-  				props: ['index','image'],
+  				props: ['index','imageSrc'],
 
 				methods: {
 					next:function(e){
@@ -277,7 +278,7 @@
 						styleFrame: { 
 							width: window.innerWidth+"px", 
 							height: window.innerHeight+"px", 
-							background:"#000 url('"+this.image.src+"')", 
+							background:"#000 url('"+this.imageSrc+"')", 
 							backgroundSize: "cover" },
 					}
 				},
@@ -397,7 +398,13 @@
 </head>
 <body>
 	<app>
-		<gallery :images="photos" ref="q"></gallery>
+		<gallery ref="q">э
+			<img src="photo1.jpg" alt="">
+			<img src="photo2.jpg" alt="">
+			<img src="photo3.jpg" alt="">
+			<img src="photo4.jpg" alt="">
+			<img src="photo5.jpg" alt="">
+		</gallery>
 	</app>
 </body>
 </html>
