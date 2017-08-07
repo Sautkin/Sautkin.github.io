@@ -315,7 +315,7 @@
 				    					( 	
 				    						( todo.deadlineDate <= dateHelpers.validCurrentDate()
 				    						&& todo.deadlineTime < dateHelpers.validCurrentTime()
-				    						&& !todo.deadlineTime.untimely )
+				    						&& !todo.untimely )
 					    					? " todo_overdue"
 					    					: ""
 				    					) +
@@ -351,7 +351,7 @@
 						    					<select 
 						    						required
 						    						className="todo__priority"
-							    					onChange={ ( e ) => this.setTodoPriority( todo, e.target.value ) } >
+							    					onChange={ e => this.setTodoPriority( todo, e.target.value ) } >
 						    						{
 							    						PRIORITY_STATES
 							    							.map( priority => 
