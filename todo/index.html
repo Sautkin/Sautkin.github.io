@@ -315,7 +315,8 @@
 				    					( 	
 				    						( todo.deadlineDate <= dateHelpers.validCurrentDate()
 				    						&& todo.deadlineTime < dateHelpers.validCurrentTime()
-				    						&& !todo.untimely )
+				    						&& !todo.untimely
+				    						&& !todo.completed )
 					    					? " todo_overdue"
 					    					: ""
 				    					) +
