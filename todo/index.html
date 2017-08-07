@@ -1,0 +1,515 @@
+<html>
+	<head>
+		<title>ToDo list</title>
+
+		<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"></link>
+
+		<style>
+			body{
+				height: 100vh;
+			}
+			.app{
+				display: flex;
+				height: 100vh;
+			}
+			.todolist{
+				margin: auto;
+				font-size: 17px;
+			}
+			.todolist__filter{
+				padding: 10px;
+			}
+			.todolist__filter-button{
+				padding: 10px;
+				font-size: 17px;
+				list-style-type: none;
+			}
+			.todolist__filter-button_active{
+				padding: 10px;
+				background-color: #cccccc;
+				list-style-type: none;
+			}
+			.todolist__list{
+				padding: 10px;
+				list-style-type: none;
+			}
+			.todo{
+				display: flex;
+				flex-wrap: nowrap
+			}
+			.todo_overdue{
+				color: #D32F2F
+			}
+			.todo__wrapper{
+				padding: 5px;
+			}
+			.todo__label{}
+			.todo__label_big{
+				font-size: 24px;
+			}
+			.todo__input{
+				padding: 0px 5px
+			}
+			.todo__description{
+				padding: 0px 5px;
+				margin: 5px;
+				width: 100%;
+				font-size: 17px;
+			}
+			.todo_completed{
+				background-color: #CCFF90
+			}
+			.todo__header{
+				display: flex;
+				flex-wrap: nowrap
+			}
+			.todo__checkbox{
+				width: 35px;
+				height: 35px;
+			}
+			.todo__checkbox_small{
+				width: 25px;
+				height: 25px;
+			}
+			.todo__header > *{
+				margin: 5px
+			}
+			.todolist__bottom{
+				padding: 10px;
+			}
+			.todolist__bottom-top{
+				padding: 5px;
+				display: flex;
+				flex-wrap: nowrap
+			}
+			.todolist__bottom-description{
+				padding: 5px;
+			}
+		</style>
+
+
+
+
+
+		<script type="text/babel">
+			const PRIORITY_STATES = [ "Normal", "Important", "Very important" ]
+			const PRIORITY_FILTER_STATES = [ "All", ...PRIORITY_STATES ]
+
+			const dateHelpers = {
+				validCurrentDate(){
+					return (new Date()).toLocaleDateString().replace(/(\d+)\.(\d+)\.(\d+)/g,"$3-$2-$1")
+				},
+				validCurrentTime(){
+					return (new Date()).toLocaleTimeString().replace(/(\d+)\:(\d+)\:(\d+)/g, (s,r1,r2,r3) => ( r1.length<=1 ? "0"+r1 : r1 ) + ":" + r2 + ":"  + r3 ) 
+				}
+			}
+
+
+
+			let reducer = function( state, action ){
+				switch( action.type ){
+					case "ADD_TODO":
+						return [ 
+								...state, 
+								{ 
+									...action.payload, 
+									completedDate: "",
+									completedTime: ""
+								} 
+							]
+						break;
+					case "EDIT_TODO":
+						return state.map( ( todo, index ) =>
+								( index === action.payload.index )
+								? { ...todo, ...action.payload.update }
+								: todo
+							);
+						break;
+					case "TOGGLE_TODO":
+						return state.map( ( todo, index ) =>
+								( index === action.payload.index )
+								? { 
+									...todo, 
+									...{ 
+										completed: !todo.completed,
+										completedDate: (new Date()).toLocaleDateString(),
+										completedTime: (new Date()).toLocaleTimeString()  
+									} 
+								}
+								: todo
+							);
+						break;
+					case "REMOVE_TODO":
+						return state.filter( ( todo, index ) => index !== action.payload.index );
+						break;
+					default:
+						return state;
+				}
+			}
+
+
+
+
+
+			const saveToLocalStorage = store => next => action => {
+				let result = next(action)
+				localStorage.store = JSON.stringify( store.getState() )
+				return result
+			}
+
+			let store = Redux.createStore( 
+				reducer, 
+				localStorage.store ? JSON.parse( localStorage.store ) : [],
+				Redux.applyMiddleware( saveToLocalStorage )
+			)
+
+
+
+
+
+
+			class TodoList extends React.Component {
+				constructor( { store } ) {
+					super();
+
+					store.subscribe(this.storeListener.bind(this))
+					setInterval( ()=>this.forceUpdate() , 1000 )
+
+					this.state = {
+						todos: store.getState(),
+
+						newTodo: { 
+							title: "", 
+							description:"", 
+							priority: "Normal",
+							untimely: false,
+							deadlineDate: dateHelpers.validCurrentDate(), 
+							deadlineTime: dateHelpers.validCurrentTime()  
+						},
+
+						todoUpdate: {},
+						editableTodo: null,
+
+						priorityFilter: "All"
+
+					};
+				}
+
+
+				getFilteredTodos(){
+					return this.state.todos
+				    	.filter( (todo) => 
+				    		this.state.priorityFilter === "All" 
+				    		|| todo.priority===this.state.priorityFilter 
+				    	)
+				}
+
+
+				addTodo(){
+					if( !this.state.newTodo.title ) {
+						alert("Title is required field")
+						return
+					}
+
+					this.props.store.dispatch( { 
+						type: "ADD_TODO", 
+						payload: this.state.newTodo
+					} );
+					this.resetNewTodo()
+				}
+				updateNewTodo( update ){
+					this.setState( { newTodo: { ...this.state.newTodo, ...update } } )
+				}
+				resetNewTodo(){
+					this.setState( { 
+						newTodo: { 
+							title: "", 
+							description:"", 
+							priority: "Normal",
+							untimely: false,
+							deadlineDate: dateHelpers.validCurrentDate(), 
+							deadlineTime: dateHelpers.validCurrentTime()  
+						} 
+					} );
+				}
+
+
+				saveTodo(){
+					this.props.store.dispatch( { 
+						type: "EDIT_TODO", 
+						payload: { 
+							index: this.state.todos.findIndex( e => e===this.state.editableTodo ), 
+							update: this.state.todoUpdate
+						}
+					} );
+					this.resetTodoUpdate()
+				}
+				resetTodoUpdate(){
+					this.setState({
+						todoUpdate: {},
+						editableTodo: null
+					});
+				}
+				updateTodoUpdate( update ){
+					this.setState( { todoUpdate: { ...this.state.todoUpdate, ...update } } )
+				}
+				toggleTodo( todo ){
+					this.props.store.dispatch( { 
+						type: "TOGGLE_TODO",
+						payload: { 
+							index: this.state.todos.findIndex( e => e===todo ) 
+						}
+					} );
+				}
+				setTodoPriority( todo, priority ){
+					this.props.store.dispatch( { 
+						type: "EDIT_TODO",
+						payload: { 
+							index: this.state.todos.findIndex( e => e===todo ), 
+							update: { priority } 
+						}
+					} );
+				}
+
+
+				removeTodo( todo ){
+					this.props.store.dispatch( { 
+						type: "REMOVE_TODO",
+						payload: { 
+							index: this.state.todos.findIndex( e => e===todo ) 
+						}
+					} );
+				}
+
+
+				storeListener(){
+					this.setState({
+						todos: store.getState()
+					});
+				}
+
+
+
+
+
+				render(){
+				    return (
+				    	<div className="todolist">
+				    		<div className="todolist__filter">
+				    			{ 
+				    				PRIORITY_FILTER_STATES
+					    				.map( priority => 
+						    			<button 
+						    				className={ "todolist__filter-button" + ( this.state.priorityFilter === priority ? " todolist__filter-button_active" : "")  }
+						    				onClick={ () => this.setState( { priorityFilter: priority } ) } >{ priority }</button> ) 
+					    		}
+				    		</div>
+
+				    		<ul className="todolist__list">
+				    		{ 
+				    			this.getFilteredTodos()
+				    			.map( (todo,index) => (
+				    			<li 
+				    				className={
+				    					"todo" +
+				    					( 	
+				    						( todo.deadlineDate <= dateHelpers.validCurrentDate()
+				    						&& todo.deadlineTime < dateHelpers.validCurrentTime() )
+					    					? " todo_overdue"
+					    					: ""
+				    					) +
+				    					( 	
+				    						todo.completed
+					    					? " todo_completed"
+					    					: ""
+				    					)
+				    			}>
+				    				{ todo !== this.state.editableTodo
+				    				? ( 
+				    					<div className="todo__wrapper">
+					    					<div className="todo__header">
+						    					<input 
+						    						className="todo__checkbox" 
+						    						onClick={ () => this.toggleTodo( todo ) } 
+						    						type="checkbox" 
+						    						checked={ todo.completed } />
+												<div className="todo__label todo__label_big">{ todo.title }</div>
+						    					{
+													!todo.untimely
+						    						? (<div>
+														<div className="todo__label">Deadline: { todo.deadlineDate + " " + todo.deadlineTime }</div>
+														{ 
+															todo.completed 
+															? ( <div className="todo__label">Completed: { todo.completedDate + " " + todo.completedTime }</div> ) 
+															: "" 
+														}
+													</div>) 
+													: ""
+												}
+
+						    					<select 
+						    						required
+						    						className="todo__priority"
+							    					onChange={ ( e ) => this.setTodoPriority( todo, e.target.value ) } >
+						    						{
+							    						PRIORITY_STATES
+							    							.map( priority => 
+							    								<option 
+																	value={ priority }
+																	selected={ priority===todo.priority } >
+							    								{ priority }
+							    								</option> 
+							    							)
+						    						}
+						    					</select>
+								    			<button 
+								    				className="todo__button"
+								    				onClick={ () => this.setState( { editableTodo: todo, todoUpdate: todo } ) } >
+								    				Edit
+								    			</button>
+								    			<button 
+								    				className="todo__button"
+								    				onClick={ () => this.removeTodo( todo ) } >
+								    				Remove
+								    			</button>
+					    					</div>
+					    					<p className="todo__description">{ todo.description }</p>
+				    					</div>
+									)
+				    				: (
+				    					<div className="todo__wrapper">
+				    						<div className="todo__header">
+					    						<input 
+													className="todo__input" 
+													value={ this.state.todoUpdate.title } 
+													onChange={ e => this.updateTodoUpdate( { title: e.target.value } ) } >
+												</input> 
+						    					Untimely: <input 
+						    						className="todo__checkbox todo__checkbox_small" 
+						    						type="checkbox" 
+						    						checked={ this.state.todoUpdate.untimely } 
+						    						onChange={ e => this.updateTodoUpdate( { untimely: !this.state.todoUpdate.untimely } ) } />
+
+						    					{
+													!this.state.todoUpdate.untimely
+								    						? (<div>
+														<input 
+									    					type="date"
+															className="todo__input" 
+															value={ this.state.todoUpdate.deadlineDate } 
+															onChange={ e => this.updateTodoUpdate( { deadlineDate: e.target.value } ) }  >
+														</input> 
+														<input 
+									    					type="time"
+															className="todo__input" 
+															value={ this.state.todoUpdate.deadlineTime } 
+															onChange={ e => this.updateTodoUpdate( { deadlineTime: e.target.value } ) }  >
+														</input>
+													</div>) 
+													: ""
+												} 
+								    			<button 
+								    				className={ "todo__button" + ( this.state.priorityFilter === "VERY_IMPORTANT" ? "todolist__filter_active" : "")  }
+								    				onClick={ this.saveTodo.bind(this) } >
+								    				Save
+								    			</button>
+								    			<button 
+								    				className={ "todo__button" + ( this.state.priorityFilter === "VERY_IMPORTANT" ? "todolist__filter_active" : "")  }
+								    				onClick={ this.resetTodoUpdate.bind(this) } >
+								    				Cancel
+								    			</button>
+				    						</div>
+											<textarea 
+							    				type="date"
+												className="todo__description" 
+												value={ this.state.todoUpdate.description } 
+												onChange={ e => this.updateTodoUpdate( { description: e.target.value } ) } >
+											</textarea> 
+				    					</div>
+									) }
+				    			</li> 
+				    			) ) }
+				    		</ul>
+
+				    		<div className="todolist__bottom">
+				    			<div className="todo__header">
+		    						<input 
+										className="todo__input" 
+										placeholder="title"
+										value={ this.state.newTodo.title }
+										onChange={ e => this.updateNewTodo( { title: e.target.value } ) } >
+									</input>
+			    					<select 
+			    						required
+			    						className="todo__priority"
+										value={ this.state.newTodo.priority }
+				    					onChange={ e => this.updateNewTodo( { priority: e.target.value } ) } >
+			    						{
+				    						PRIORITY_STATES
+				    							.map( priority => 
+				    								<option 
+				    									value={ priority }
+														selected={ priority===this.state.newTodo.priority } >
+				    								{ priority }
+				    								</option> 
+				    							)
+			    						}
+			    					</select>
+			    					Untimely: <input 
+			    						className="todo__checkbox todo__checkbox_small" 
+			    						type="checkbox" 
+			    						checked={ this.state.newTodo.untimely } 
+			    						onChange={ e => this.updateNewTodo( { untimely: !this.state.newTodo.untimely } ) } />
+			    					{
+										!this.state.newTodo.untimely
+			    						? (<div>
+											<input
+						    					type="date"
+												className="todo__input" 
+												value={ this.state.newTodo.deadlineDate }
+												onChange={ () => this.updateNewTodo( { deadlineDate: event.target.value } ) } >
+											</input>
+											<input 
+						    					type="time"
+												className="todo__input" 
+												value={ this.state.newTodo.deadlineTime }
+												onChange={ () => this.updateNewTodo( { deadlineTime: event.target.value } ) } >
+											</input>
+										</div>) 
+										: ""
+									}
+									<button 
+										className="todo__input" 
+										onClick={ this.addTodo.bind(this) }  >
+									Add new todo
+									</button>
+								</div>
+								<textarea 
+									className="todo__description"
+									placeholder="description"
+									value={ this.state.newTodo.description }
+									onChange={ () => this.updateNewTodo( { description: event.target.value } ) } >
+								</textarea> 
+				    		</div>
+
+				    	</div>
+					);
+				}
+			}
+
+			React.render( <TodoList store={ store } />, document.getElementById("app") )
+
+		</script>
+
+
+	</head>
+	<body>
+		<div id="app" class="app"></div>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.25.0/babel.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.1/react.min.js"></script> 
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.1/react-dom.min.js"></script> 
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/react-redux/5.0.5/react-redux.min.js"></script> 
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/redux/3.7.2/redux.min.js"></script> 
+	</body>
+</html>
