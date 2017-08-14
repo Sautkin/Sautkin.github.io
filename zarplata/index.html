@@ -16,7 +16,7 @@
 				allVacancies.push( fetch("https://api.zp.ru/v1/vacancies?geo_id=826&is_new_only=1&period=today&limit=100&offset=" + offset ) )
 			}
 			allVacancies = await Promise.all( allVacancies )
-			allVacancies = await Promise.all( allVacancies.map( e => e.json() ) )
+			allVacancies = await Promise.all( allVacancies.map( e => e.json() ) ) 
 
 
 			//Объединяем пачки вакансий и оставляем только сегодняшние
@@ -54,7 +54,7 @@
 
 
 			//Рендер
-			let html = 
+			document.body.innerHTML += 
 				"<h3>Количество сегодняшних вакансий по рубрикам:</h3> <br>"
 				+ countByRubric
 					.map( rubric => rubric.title + ": " + rubric.count )
@@ -63,8 +63,6 @@
 				+ wordsCount
 					.map( word => word.word + ": " + word.count )
 					.join("<br>")
-
-			document.body.innerHTML += html
 
 		})()
 	</script>
