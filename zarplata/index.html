@@ -7,13 +7,13 @@
 	<script type="text/javascript">
 		(async function() {
 
-			let vacanciesCount = ( await ( await fetch("https://api.zp.ru/v1/vacancies?geo_id=1219&is_new_only=1&period=today&limit=0&offset=0&rubric_id=" ) ).json() ).metadata.resultset.count
+			let vacanciesCount = ( await ( await fetch("https://api.zp.ru/v1/vacancies?geo_id=826&is_new_only=1&period=today&limit=0&offset=0" ) ).json() ).metadata.resultset.count
 
 
 			//Все вакансии за последние сутки загружаются пачками по 100 штук
 			let allVacancies=[]
 			for( var offset = 0; offset < vacanciesCount; offset += 100 ){
-				allVacancies.push( fetch("https://api.zp.ru/v1/vacancies?geo_id=1219&is_new_only=1&period=today&limit=100&offset=" + offset ) )
+				allVacancies.push( fetch("https://api.zp.ru/v1/vacancies?geo_id=826&is_new_only=1&period=today&limit=100&offset=" + offset ) )
 			}
 			allVacancies = await Promise.all( allVacancies )
 			allVacancies = await Promise.all( allVacancies.map( e => e.json() ) )
