@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Zarplata.ru</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script>
+	<script type="text/javascript">
+		(async function() {
+
+			let rubrics = ( await ( await fetch("https://api.zp.ru/v1/rubrics?entity=vacancy&limit=100&offset=0") ).json() ).rubrics
+			let vacanciesCount = ( await ( await fetch("https://api.zp.ru/v1/vacancies?geo_id=1219&is_new_only=1&period=today&limit=0&offset=0&rubric_id=" ) ).json() ).metadata.resultset.count
+
+			//Все вакансии за последние сутки загружаются пачками по 100 штук
+			let allVacancies=[]
+			for( var offset = 0; offset < vacanciesCount; offset += 100 ){
+				allVacancies.push( fetch("https://api.zp.ru/v1/vacancies?geo_id=1219&is_new_only=1&period=today&limit=100&offset=" + offset ) )
+			}
+			allVacancies = await Promise.all( allVacancies )
+			allVacancies = await Promise.all( allVacancies.map( e => e.json() ) )
+
+			//Объединяем пачки вакансий и оставляем только сегодняшние
+			let allTodayVacancies = _(allVacancies)
+				.map( e => e.vacancies )
+				.flatten()
+				.filter( vac => {
+					return new Date(vac.add_date).getDate() == new Date().getDate()
+						&& new Date(vac.add_date).getMonth() == new Date().getMonth()
+						&& new Date(vac.add_date).getFullYear() == new Date().getFullYear()
+				})
+				.value()
+
+			//Подсчет количества вакансий по рубрикам
+			let countByRubric = {}
+			for( rubric of rubrics ){
+				countByRubric[rubric.title] = 0
+
+				for( vacancy of allTodayVacancies ){
+					if ( vacancy.rubrics.some( e => e.title == rubric.title ) )
+					countByRubric[rubric.title] += 1
+				}
+			}
+
+			//Подсчет количества слов
+			let wordsCount = _(allTodayVacancies)
+				.map( vac => vac.header.match(/[а-яА-Я\w\-]+/g) || [] )
+				.flatten()
+				.countBy( word => word )
+				.value()
+
+			//Рендер
+			let html = "<h3>Количество сегодняшних вакансий по рубрикам:</h3> <br>"
+
+			for( rubric in countByRubric ){
+				html += rubric + ": " + countByRubric[rubric] + "<br>"
+			}
+
+			html += "<br><h3>Статистика употребления слов в заголовках по сегодняшним вакансиям:</h3> <br>"
+			
+			for( word in wordsCount ){
+				html += word + ": " + wordsCount[word] + "<br>"
+			}
+
+			document.body.innerHTML += html
+
+		})()
+	</script>
+</head>
+<body>
+	
+</body>
+</html>
