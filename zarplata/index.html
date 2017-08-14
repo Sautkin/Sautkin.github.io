@@ -7,7 +7,6 @@
 	<script type="text/javascript">
 		(async function() {
 
-			let rubrics = ( await ( await fetch("https://api.zp.ru/v1/rubrics?entity=vacancy&limit=100&offset=0") ).json() ).rubrics
 			let vacanciesCount = ( await ( await fetch("https://api.zp.ru/v1/vacancies?geo_id=1219&is_new_only=1&period=today&limit=0&offset=0&rubric_id=" ) ).json() ).metadata.resultset.count
 
 
@@ -25,9 +24,11 @@
 				.map( e => e.vacancies )
 				.flatten()
 				.filter( vac => {
-					return new Date(vac.add_date).getDate() == new Date().getDate()
-						&& new Date(vac.add_date).getMonth() == new Date().getMonth()
-						&& new Date(vac.add_date).getFullYear() == new Date().getFullYear()
+					let today = new Date()
+					let addDate = new Date(vac.add_date)
+					return addDate.getDate() == today.getDate()
+						&& addDate.getMonth() == today.getMonth()
+						&& addDate.getFullYear() == today.getFullYear()
 				})
 				.value()
 
