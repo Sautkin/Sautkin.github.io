@@ -39,8 +39,8 @@
 				.flatten()
 				.countBy( rubric => rubric.title )
 				.toPairs()
-				.sortBy( r => -r[1] )
 				.map( r => { return {title: r[0], count: r[1]} } )
+				.sortBy( r => -r.count )
 				.value()
 
 
