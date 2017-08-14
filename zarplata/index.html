@@ -33,16 +33,10 @@
 
 
 			//Подсчет количества вакансий по рубрикам
-			let countByRubric = {}
-			for( rubric of rubrics ){
-				countByRubric[rubric.title] = 0
-
-				for( vacancy of allTodayVacancies ){
-					if ( vacancy.rubrics.some( e => e.title == rubric.title ) )
-					countByRubric[rubric.title] += 1
-				}
-			}
-			countByRubric = _(countByRubric)
+			let countByRubric = _(allTodayVacancies)
+				.map( vac => vac.rubrics )
+				.flatten()
+				.countBy( rubric => rubric.title )
 				.toPairs()
 				.sortBy( r => -r[1] )
 				.map( r => { return {title: r[0], count: r[1]} } )
