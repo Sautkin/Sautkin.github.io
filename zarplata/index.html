@@ -10,6 +10,7 @@
 			let rubrics = ( await ( await fetch("https://api.zp.ru/v1/rubrics?entity=vacancy&limit=100&offset=0") ).json() ).rubrics
 			let vacanciesCount = ( await ( await fetch("https://api.zp.ru/v1/vacancies?geo_id=1219&is_new_only=1&period=today&limit=0&offset=0&rubric_id=" ) ).json() ).metadata.resultset.count
 
+
 			//Все вакансии за последние сутки загружаются пачками по 100 штук
 			let allVacancies=[]
 			for( var offset = 0; offset < vacanciesCount; offset += 100 ){
@@ -17,6 +18,7 @@
 			}
 			allVacancies = await Promise.all( allVacancies )
 			allVacancies = await Promise.all( allVacancies.map( e => e.json() ) )
+
 
 			//Объединяем пачки вакансий и оставляем только сегодняшние
 			let allTodayVacancies = _(allVacancies)
@@ -29,6 +31,7 @@
 				})
 				.value()
 
+
 			//Подсчет количества вакансий по рубрикам
 			let countByRubric = {}
 			for( rubric of rubrics ){
@@ -39,25 +42,35 @@
 					countByRubric[rubric.title] += 1
 				}
 			}
+			countByRubric = _(countByRubric)
+				.toPairs()
+				.sortBy( r => -r[1] )
+				.map( r => { return {title: r[0], count: r[1]} } )
+				.value()
+				
+
 
 			//Подсчет количества слов
 			let wordsCount = _(allTodayVacancies)
 				.map( vac => vac.header.match(/[а-яА-Я\w\-]+/g) || [] )
 				.flatten()
 				.countBy( word => word )
+				.toPairs()
+				.sortBy( w => -w[1] )
+				.map( w => { return { word: w[0], count: w[1] } } )
 				.value()
 
 			//Рендер
 			let html = "<h3>Количество сегодняшних вакансий по рубрикам:</h3> <br>"
 
-			for( rubric in countByRubric ){
-				html += rubric + ": " + countByRubric[rubric] + "<br>"
+			for( rubric of countByRubric ){
+				html += rubric.title + ": " + rubric.count + "<br>"
 			}
 
 			html += "<br><h3>Статистика употребления слов в заголовках по сегодняшним вакансиям:</h3> <br>"
-			
-			for( word in wordsCount ){
-				html += word + ": " + wordsCount[word] + "<br>"
+
+			for( word of wordsCount ){
+				html += word.word + ": " + word.count + "<br>"
 			}
 
 			document.body.innerHTML += html
