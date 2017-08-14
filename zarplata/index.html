@@ -26,9 +26,7 @@
 				.filter( vac => {
 					let today = new Date()
 					let addDate = new Date(vac.add_date)
-					return addDate.getDate() == today.getDate()
-						&& addDate.getMonth() == today.getMonth()
-						&& addDate.getFullYear() == today.getFullYear()
+					return addDate.toDateString() == today.toDateString()
 				})
 				.value()
 
