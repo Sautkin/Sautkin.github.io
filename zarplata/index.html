@@ -42,31 +42,29 @@
 				.sortBy( r => -r[1] )
 				.map( r => { return {title: r[0], count: r[1]} } )
 				.value()
-				
 
 
 			//Подсчет количества слов
 			let wordsCount = _(allTodayVacancies)
-				.map( vac => vac.header.match(/[а-яА-Я\w\-]+/g) || [] )
+				.map( vac => vac.header.match(/[а-яА-Яa-zA-Z\-]+/g) || [] )
 				.flatten()
 				.countBy( word => word )
 				.toPairs()
-				.sortBy( w => -w[1] )
-				.map( w => { return { word: w[0], count: w[1] } } )
+				.map( word => { return { word: word[0], count: word[1] } } )
+				.sortBy( word => -word.count )
 				.value()
 
+
 			//Рендер
-			let html = "<h3>Количество сегодняшних вакансий по рубрикам:</h3> <br>"
-
-			for( rubric of countByRubric ){
-				html += rubric.title + ": " + rubric.count + "<br>"
-			}
-
-			html += "<br><h3>Статистика употребления слов в заголовках по сегодняшним вакансиям:</h3> <br>"
-
-			for( word of wordsCount ){
-				html += word.word + ": " + word.count + "<br>"
-			}
+			let html = 
+				"<h3>Количество сегодняшних вакансий по рубрикам:</h3> <br>"
+				+ countByRubric
+					.map( rubric => rubric.title + ": " + rubric.count )
+					.join("<br>")
+				+ "<br><h3>Статистика употребления слов в заголовках по сегодняшним вакансиям:</h3> <br>"
+				+ wordsCount
+					.map( word => word.word + ": " + word.count )
+					.join("<br>")
 
 			document.body.innerHTML += html
 
