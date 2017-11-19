@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import registerServiceWorker from './registerServiceWorker';
 import { observer } from 'mobx-react';
-import { observable, computed } from 'mobx';
+import { observable, computed, autorun } from 'mobx';
 
 const dom = observable({
   style: {
@@ -37,6 +37,8 @@ const dom = observable({
   ]
 });
 
+// autorun(() => { dom.children[0].style.border; })
+
 const glob = observable({
 	currentElem: null,
 });
@@ -48,15 +50,21 @@ const Designer = () => [
 
 @observer
 class Elem extends Component {
-	onClick = () => console.log();
+  onClick = e => {
+  	e.target === e.currentTarget ? glob.currentElem = e.currentTarget : null;
+  	if (e.target === e.currentTarget) {
+  		this.props.elem.style.border = '3px solid #0f0';
+  	}
+  };
 
   render() {
   	const { children, ...elem } = this.props.elem;
+  	console.log(this.props.elem, 555, elem)
 
     return (
       <div
       	{...elem}
-      	onClick={e => e.target === e.currentTarget ? glob.currentElem = e.currentTarget : null}
+      	onClick={this.onClick}
       >
         { children ? children.map(child => (
           <Elem elem={child} />
@@ -75,6 +83,9 @@ class Frame extends Component {
 		right: false,
 	}
 
+	@observable content = '';
+	@observable pressed = false;
+
 	@computed get getPosition() {
 		if (!glob.currentElem) { return { top: 10, left: 10, width: 100, height: 100 } };
 
@@ -83,11 +94,30 @@ class Frame extends Component {
 		return { top, left, width, height };
 	}
 
+	onMouseDown = e => {
+		if (e.target !== e.currentTarget) return;
+		e.target.requestPointerLock();
+		this.pressed = true;
+	}
+
+	onMouseMove = ({ nativeEvent: e }) => {
+		if (!this.pressed) return;
+		this.content = e.movementX + ' ' + e.movementY;
+	}
+
+	onMouseUp = e => {
+		document.exitPointerLock();
+		this.pressed = false;
+	}
+
 	render() {
 		const { activeSides, getPosition } = this;
 
 		return (
 			<div
+				onMouseDown={this.onMouseDown}
+				onMouseMove={this.onMouseMove}
+				onMouseUp={this.onMouseUp}
 				style={{
 					position: 'fixed',
 					...getPosition,
@@ -145,7 +175,7 @@ class Frame extends Component {
 						borderRightColor: activeSides.right ? '#F00' : '#000',
 					}}
 				/>
-
+				{ this.content }
 			</div>
 		)
 	}
