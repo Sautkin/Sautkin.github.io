@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import registerServiceWorker from './registerServiceWorker';
 import { observer } from 'mobx-react';
 import { observable, computed, autorun } from 'mobx';
+import Worker from './test.worker.js';
 
 const dom = observable({
   style: {
@@ -36,6 +37,32 @@ const dom = observable({
     }
   ]
 });
+
+
+
+console.log(44444)
+
+const testWorker = new Worker();
+
+const sharedBuffer = new window.SharedArrayBuffer(10 * Int32Array.BYTES_PER_ELEMENT);
+
+testWorker.postMessage({ sharedBuffer });
+
+const sharedArray = new Int32Array(sharedBuffer); // (B)
+
+
+window.Atomics.store(sharedArray, 0, 123);
+
+
+// testWorker.postMessage('Success!');
+
+// testWorker.onmessage = function(e) {
+// 	alert(e.data);
+// };
+
+
+
+
 
 // autorun(() => { dom.children[0].style.border; })
 
