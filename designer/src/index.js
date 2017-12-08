@@ -17,21 +17,21 @@ const dom = observable({
       style: {
         width: '30%',
         border: '1px solid #000',
-        height: 300,
+        height: 100,
       },
       children: [],
     }, {
       style: {
         width: '30%',
         border: '1px solid #000',
-        height: 300,
+        height: 100,
       },
       children: [],
     }, {
       style: {
         width: '30%',
         border: '1px solid #000',
-        height: 300,
+        height: 100,
       },
       children: [],
     }
@@ -73,6 +73,7 @@ const glob = observable({
 const Designer = () => [
 	<Elem elem={dom} />,
 	<Frame />,
+	<Slider />,
 ];
 
 @observer
@@ -206,6 +207,129 @@ class Frame extends Component {
 			</div>
 		)
 	}
+};
+
+@observer
+class Slider extends Component {
+	@observable rows = [200, 300, 200, 300];
+
+	@observable columns = [200, 300, 200, 300];
+
+	direction = 'rows';
+
+	current = 0
+
+  onMouseDown = (index, direction) => {
+  	this.direction = direction;
+  	this.current = index;
+  	document.addEventListener('mousemove', this.onMouseMove);
+  	document.addEventListener('mouseup', this.onMouseUp);
+  }
+
+  onMouseUp = e => {
+  	document.removeEventListener('mousemove', this.onMouseMove);
+  	document.removeEventListener('mouseup', this.onMouseUp);
+  }
+
+  onMouseMove = e => {
+  	e.preventDefault();
+  	const delta = this.direction === 'rows' ? e.movementY : e.movementX;
+  	this[this.direction][this.current] += delta;
+  	this[this.direction][this.current + 1] -= delta;
+  }
+
+  render() {
+    return (
+	    <div
+	    	style={{
+	    		position: 'relative',
+	    		margin: 30,
+	    	}}
+	    >
+	      <div
+	      	style={{
+	      		display: 'flex',
+	      		flexDirection: 'column',
+	      		position: 'absolute',
+	      		left: -30,
+	      	}}
+	      >
+	      	{ this.rows.map((row, index) => [
+	      		<div style={{
+			        boxSizing: 'border-box',
+	      			width: 30,
+	      			height: row,
+	      			border: '1px solid'
+	      		}} />,
+	      		index < this.rows.length - 1 ? (
+			        <div
+			        	style={{
+			        		boxSizing: 'border-box',
+			        		cursor: 'move',
+			        		width: 30,
+			        		height: 8,
+			        		margin: `${5 - 4}px 0px`,
+			        		border: '1px solid',
+			        	}}
+			        	draggable={false}
+			        	onMouseDown={() => this.onMouseDown(index, 'rows')}
+			        />
+		        ) : null
+	      	])}
+	      </div>
+	      <div
+	      	style={{
+	      		display: 'flex',
+	      		position: 'absolute',
+	      		top: -30,
+	      	}}
+	      >
+	      	{ this.columns.map((column, index) => [
+	      		<div style={{
+			        boxSizing: 'border-box',
+	      			height: 30,
+	      			width: column,
+	      			border: '1px solid',
+	      		}} />,
+	      		index < this.columns.length - 1 ? (
+			        <div
+			        	style={{
+			        		boxSizing: 'border-box',
+			        		cursor: 'move',
+			        		height: 30,
+			        		width: 8,
+			        		margin: `0px ${5 - 4}px`,
+			        		border: '1px solid',
+			        	}}
+			        	draggable={false}
+			        	onMouseDown={() => this.onMouseDown(index, 'columns')}
+			        />
+		        ) : null
+	      	])}
+	      </div>
+	      <div
+		      style={{
+		      	display: 'grid',
+		      	gridGap: 10,
+		      	gridTemplateColumns: this.columns.map(v => v + 'px').join(' '),
+		      	gridTemplateRows: this.rows.map(v => v + 'px').join(' '),
+		      }}
+	      >
+	      	{ this.columns.map((row, index) => (
+		      	this.rows.map((column, index) => (
+		      		<div
+		      			style={{
+		      				border: '1px solid',
+		      				gridColumn: 'span 1',
+		      				gridRow: 'span 1',
+		      			}}
+		      		/>
+		      	))
+	      	))}
+	      </div>
+	    </div>
+    )
+  }
 };
 
 ReactDOM.render(<Designer />, document.getElementById('root'));
