@@ -255,17 +255,24 @@ class Slider extends Component {
 	      	}}
 	      >
 	      	{ this.rows.map((row, index) => [
-	      		<div style={{
-			        boxSizing: 'border-box',
-	      			width: 30,
-	      			height: row,
-	      			border: '1px solid'
-	      		}} />,
+	      		<div
+		      		style={{
+		      			display: 'grid',
+		      			justifyContent: 'center',
+		      			alignContent: 'center',
+				        boxSizing: 'border-box',
+		      			width: 30,
+		      			height: row,
+		      			border: '1px solid'
+		      		}}
+		      	>
+		      		{ row }
+		      	</div>,
 	      		index < this.rows.length - 1 ? (
 			        <div
 			        	style={{
 			        		boxSizing: 'border-box',
-			        		cursor: 'move',
+			        		cursor: 'row-resize',
 			        		width: 30,
 			        		height: 8,
 			        		margin: `${5 - 4}px 0px`,
@@ -285,17 +292,24 @@ class Slider extends Component {
 	      	}}
 	      >
 	      	{ this.columns.map((column, index) => [
-	      		<div style={{
-			        boxSizing: 'border-box',
-	      			height: 30,
-	      			width: column,
-	      			border: '1px solid',
-	      		}} />,
+	      		<div
+		      		style={{
+		      			display: 'grid',
+		      			justifyContent: 'center',
+		      			alignContent: 'center',
+				        boxSizing: 'border-box',
+		      			height: 30,
+		      			width: column,
+		      			border: '1px solid',
+		      		}}
+	      		>
+		      		{ column }
+		      	</div>,
 	      		index < this.columns.length - 1 ? (
 			        <div
 			        	style={{
 			        		boxSizing: 'border-box',
-			        		cursor: 'move',
+			        		cursor: 'col-resize',
 			        		height: 30,
 			        		width: 8,
 			        		margin: `0px ${5 - 4}px`,
@@ -319,13 +333,26 @@ class Slider extends Component {
 		      	this.rows.map((column, index) => (
 		      		<div
 		      			style={{
-		      				border: '1px solid',
+		      				border: '1px dotted',
 		      				gridColumn: 'span 1',
 		      				gridRow: 'span 1',
 		      			}}
 		      		/>
 		      	))
 	      	))}
+	      </div>
+	      <div
+	      	style={{
+	      		position: 'absolute',
+	      		bottom: -10,
+	      		right: -10,
+	      		width: 10,
+	      		height: 10,
+	      		border: '1px solid'
+	      	}}
+	      	onSizingMouseDown={this.onSizingMouseDown}
+	      >
+
 	      </div>
 	    </div>
     )
