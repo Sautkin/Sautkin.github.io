@@ -73,7 +73,9 @@ const glob = observable({
 const Designer = () => [
 	<Elem elem={dom} />,
 	<Frame />,
-	<Slider />,
+	<Workplace>
+		<Grid />
+	</Workplace>,
 ];
 
 @observer
@@ -210,7 +212,7 @@ class Frame extends Component {
 };
 
 @observer
-class Slider extends Component {
+class Grid extends Component {
 	@observable rows = [200, 300, 200, 300];
 
 	@observable columns = [200, 300, 200, 300];
@@ -303,7 +305,7 @@ class Slider extends Component {
 		      			border: '1px solid',
 		      		}}
 	      		>
-		      		{ column }
+		      		<Input value={column} />
 		      	</div>,
 	      		index < this.columns.length - 1 ? (
 			        <div
@@ -358,6 +360,153 @@ class Slider extends Component {
     )
   }
 };
+
+@observer
+class Workplace extends Component {
+	@observable scale = 1;
+
+	@observable translateX = 0;
+	@observable translateY = 0;
+
+	@observable drag = false;
+
+  zoom = (add, e) => {
+  	console.log(e);
+  	this.scale += add * 0.1;
+  }
+
+  onMouseDown = e => {
+  	if (e.button === 1) {
+  		e.preventDefault();
+	  	this.drag = true;
+	  	document.addEventListener('mousemove', this.onMouseMove);
+	  	document.addEventListener('mouseup', this.onMouseUp);
+  	}
+  }
+
+  onMouseUp = e => {
+  	if (e.button === 1) {
+	  	document.removeEventListener('mousemove', this.onMouseMove);
+	  	document.removeEventListener('mouseup', this.onMouseUp);
+  	}
+  }
+
+  onMouseMove = e => {
+  	e.preventDefault();
+	  this.drag = false;
+  	this.translateX += e.movementX;
+  	this.translateY += e.movementY;
+  }
+
+  render() {
+  	return (
+  		<div
+  			style={{
+  				transform: `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`
+  			}}
+  			onWheel={e => {
+  				e.preventDefault();
+  				this.zoom(-1 * e.deltaY / 100, e);
+  			}}
+  			onMouseDown={this.onMouseDown}
+  		>
+  			{ this.props.children }
+  		</div>
+  	)
+  }
+}
+
+@observer
+class Input extends Component {
+	static defaultProps = {
+		onChange: () => {},
+		onChangeUnit: () => {},
+		units: ['px', '%', 'fr'],
+		unitsValue: 'px',
+	}
+
+	@observable openedUnits = false;
+
+	onChange = e => {
+		this.props.onChange(e);
+	}
+
+	onChangeUnit = e => {
+		this.props.onChangeUnit(e);
+	}
+
+  render() {
+  	return (
+  		<div
+  			style={{
+  				display: 'inline-block',
+  				position: 'relative',
+  				...this.props.style,
+  			}}
+  		>
+  			<input
+  				style={{
+  					width: '55px',
+  				}}
+  				value={this.props.value}
+  				onChange={this.onChange}
+  			/>
+  			<div
+  				style={{
+  					position: 'absolute',
+  					top: 0,
+  					bottom: 0,
+  					right: 5,
+  					marginTop: 'auto',
+  					marginBottom: 'auto',
+  					height: 15,
+  					width: 20,
+  					backgroundColor: '#ccc',
+  					fontSize: '15px',
+  					lineHeight: '15px',
+  					textAlign: 'center',
+  				}}
+  				onClick={() => this.openedUnits = !this.openedUnits}
+  			>
+  				{ this.props.unitsValue }
+  				{ this.openedUnits ? (
+		  			<div
+		  				style={{
+		  					display: 'flex',
+		  					flexDirection: 'column',
+		  					position: 'absolute',
+		  					bottom: 15,
+		  					left: 0,
+		  					width: 20,
+		  					backgroundColor: '#ccc',
+		  					fontSize: '15px',
+		  				}}
+		  			>
+		  				{ this.props.units.map(unit => (
+				  			<div
+				  				style={{
+	  								height: 15,
+				  					width: 20,
+				  					backgroundColor: '#ccc',
+				  					fontSize: '15px',
+				  				}}
+	  							onClick={this.onChangeUnit}
+				  			>
+				  				{ unit }
+				  			</div>
+		  				))}
+		  			</div>
+	  			) : null}
+  			</div>
+  		</div>
+  	)
+  }
+}
+
+
+
+
+
 
 ReactDOM.render(<Designer />, document.getElementById('root'));
 registerServiceWorker();
