@@ -5,5 +5,4 @@ import { observer } from 'mobx-react';
 import { observable, computed, autorun } from 'mobx';
 
 
-
-ReactDOM.render(<div>Asdfas</div>, document.getElementById('root'));
+ReactDOM.render(<div>Test</div>, document.getElementById('root'));
